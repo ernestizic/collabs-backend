@@ -19,7 +19,7 @@ export class UsersService {
     ]);
 
     return {
-      tasks: users,
+      users,
       pagination: {
         total: totalUsers,
         currentPage: page,

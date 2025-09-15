@@ -7,7 +7,12 @@ import {
   UsePipes,
   ValidationPipe,
 } from '@nestjs/common';
-import { LoginDto, SignupDto } from './dto/auth-dto';
+import {
+  LoginDto,
+  SignupDto,
+  VerificationEmailDto,
+  VerifyEmailDto,
+} from './dto/auth-dto';
 import { AuthService } from './auth.service';
 
 @Controller('auth')
@@ -35,6 +40,29 @@ export class AuthController {
       status: true,
       message: 'User creation successfull',
       data: user,
+    };
+  }
+
+  @Post('send-verification-code')
+  @UsePipes(ValidationPipe)
+  async sendVerificationEmail(@Body() payload: VerificationEmailDto) {
+    await this.authService.sendVerificationCode(payload.email);
+
+    return {
+      status: true,
+      message: 'Verification email sent',
+    };
+  }
+
+  @Post('verify-code')
+  @UsePipes(ValidationPipe)
+  async verifyEmail(@Body() payload: VerifyEmailDto) {
+    const { email, code } = payload;
+    await this.authService.verifyCode(email, code);
+
+    return {
+      status: true,
+      message: 'Email verification successful',
     };
   }
 }

@@ -1,4 +1,4 @@
-import { IsEmail, IsNotEmpty, IsString } from 'class-validator';
+import { IsEmail, IsNotEmpty, IsString, Matches } from 'class-validator';
 
 export class LoginDto {
   @IsEmail()
@@ -28,4 +28,23 @@ export class SignupDto {
   @IsString()
   @IsNotEmpty()
   password: string;
+}
+
+export class VerificationEmailDto {
+  @IsEmail()
+  @IsString()
+  @IsNotEmpty()
+  email: string;
+}
+
+export class VerifyEmailDto {
+  @IsEmail()
+  @IsString()
+  @IsNotEmpty()
+  email: string;
+
+  @IsString()
+  @IsNotEmpty()
+  @Matches(/^\d{6}$/, { message: 'Code must be exactly 6 digits' })
+  code: string;
 }
