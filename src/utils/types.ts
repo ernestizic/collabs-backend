@@ -1,9 +1,16 @@
-export type User = {
-  access_token: string;
+import { Request } from 'express';
+
+export type RequestUser = {
   id: number;
-  email: string;
   firstname: string;
   lastname: string;
+  email: string;
   email_verified_at: Date | null;
   createdAt: Date;
+  iat: number;
+  exp: number;
 };
+
+export interface AuthRequest extends Request {
+  user: RequestUser;
+}

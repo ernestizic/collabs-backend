@@ -150,7 +150,9 @@ export class AuthService {
         user: { connect: { id: user.id } },
       },
     });
-    this.mailService.sendPasswordResetEmail(email, code);
+    this.mailService.sendPasswordResetEmail(email, code).catch((err) => {
+      this.logger.error(err);
+    });
     return 'Password reset instructions sent';
   }
 
