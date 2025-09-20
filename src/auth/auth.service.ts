@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   Injectable,
+  Logger,
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
@@ -13,6 +14,7 @@ import * as crypto from 'crypto';
 
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
   constructor(
     private prisma: PrismaService,
     private jwtService: JwtService,
@@ -75,7 +77,7 @@ export class AuthService {
     if (!user) throw new BadRequestException('User not found');
 
     const latestCode = await this.prisma.emailVerification.findFirst({
-      where: { userId: user.id },
+      where: { userId: user.id, type: 'EMAIL_VERIFICATION' },
       orderBy: { createdAt: 'desc' },
     });
 
@@ -86,12 +88,12 @@ export class AuthService {
     if (latestCode.expiresAt < new Date())
       throw new BadRequestException('This code has expired');
 
-    const updatedUser = await this.prisma.user.update({
+    await this.prisma.user.update({
       where: { id: user.id },
       data: { email_verified_at: new Date() },
     });
 
-    return updatedUser;
+    return 'Email verification successful';
   }
 
   async signUp(payload: Prisma.UserCreateInput) {
@@ -112,12 +114,73 @@ export class AuthService {
     };
 
     // create user
-    await this.prisma.user.create({ data: secureUserData });
+    const newUser = await this.prisma.user.create({ data: secureUserData });
+    const { password: _, ...restOfUser } = newUser;
+
+    const signedUser = {
+      ...restOfUser,
+      access_token: await this.jwtService.signAsync(restOfUser),
+    };
+
     // send user email verification code
-    await this.sendVerificationCode(email);
+    //add this to background job (queue) to avoid delay or fire & forget - no await
+    this.sendVerificationCode(email).catch((err) =>
+      this.logger.error('Failed to send verification email', err),
+    );
 
     // login user
-    const loggedinUser = await this.validateUser(email, password);
-    return loggedinUser;
+    return signedUser;
+  }
+
+  async sendPasswordResetEmail(email: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { email: email },
+      include: { EmailVerification: true },
+    });
+
+    if (!user)
+      throw new BadRequestException('User with this email does not exist');
+
+    const code = crypto.randomInt(100000, 999999).toString();
+    await this.prisma.emailVerification.create({
+      data: {
+        code,
+        type: 'PASSWORD_RESET',
+        expiresAt: new Date(Date.now() + 1000 * 60 * 10),
+        user: { connect: { id: user.id } },
+      },
+    });
+    this.mailService.sendPasswordResetEmail(email, code);
+    return 'Password reset instructions sent';
+  }
+
+  async resetPassword(email: string, password: string, code: string) {
+    const user = await this.prisma.user.findUnique({ where: { email } });
+
+    if (!user)
+      throw new BadRequestException('User with this email does not exist');
+
+    const latestCode = await this.prisma.emailVerification.findFirst({
+      where: { userId: user.id, type: 'PASSWORD_RESET' },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    if (!password) throw new BadRequestException('Password is required');
+    if (!latestCode)
+      throw new BadRequestException(
+        'Please request for a verification code to be sent',
+      );
+    if (latestCode.code !== code)
+      throw new BadRequestException('Code is incorrect');
+    if (latestCode.expiresAt < new Date())
+      throw new BadRequestException('This code has expired');
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: { password: hashedPassword },
+    });
+    return 'Password updated';
   }
 }

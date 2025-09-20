@@ -13,6 +13,10 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum VerificationType {
+  EMAIL_VERIFICATION
+  PASSWORD_RESET
+}
 model User {
   id                Int                 @id @default(autoincrement())
   firstname         String
@@ -27,6 +31,7 @@ model User {
 model EmailVerification {
   id        Int      @id @default(autoincrement())
   code      String
+  type VerificationType @default(EMAIL_VERIFICATION)
   createdAt DateTime @default(now())
   expiresAt DateTime
   userId    Int

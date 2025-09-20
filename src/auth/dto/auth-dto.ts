@@ -48,3 +48,19 @@ export class VerifyEmailDto {
   @Matches(/^\d{6}$/, { message: 'Code must be exactly 6 digits' })
   code: string;
 }
+
+export class ResetPasswordDto {
+  @IsEmail()
+  @IsString()
+  @IsNotEmpty()
+  email: string;
+
+  @IsString()
+  @IsNotEmpty()
+  password: string;
+
+  @IsString()
+  @IsNotEmpty()
+  @Matches(/^\d{6}$/, { message: 'Code must be exactly 6 digits' })
+  code: string;
+}

@@ -1,14 +1,17 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   HttpCode,
   HttpStatus,
   Post,
+  Query,
   UsePipes,
   ValidationPipe,
 } from '@nestjs/common';
 import {
   LoginDto,
+  ResetPasswordDto,
   SignupDto,
   VerificationEmailDto,
   VerifyEmailDto,
@@ -64,5 +67,27 @@ export class AuthController {
       status: true,
       message: 'Email verification successful',
     };
+  }
+
+  @Post('forgot-password')
+  async sendForgotPasswordCode(@Query('email') email: string) {
+    if (!email) throw new BadRequestException('Email is required');
+
+    const res = await this.authService.sendPasswordResetEmail(email);
+    return {
+      status: true,
+      message: res,
+    };
+  }
+
+  @Post('reset-password')
+  async resetPassword(@Body() payload: ResetPasswordDto) {
+    const { email, password, code } = payload;
+    await this.authService.resetPassword(email, password, code);
+
+    return {
+      status: true,
+      message: "Password updated"
+    }
   }
 }

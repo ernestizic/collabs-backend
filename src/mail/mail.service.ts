@@ -4,12 +4,12 @@ import {
   Logger,
   OnModuleInit,
 } from '@nestjs/common';
-import nodemailer from 'nodemailer';
+import * as nodemailer from 'nodemailer';
 
 @Injectable()
 export class MailService implements OnModuleInit {
-  private transporter: nodemailer.Transporter;
   private readonly logger = new Logger(MailService.name);
+  private transporter: nodemailer.Transporter;
 
   onModuleInit() {
     this.transporter = nodemailer.createTransport({
@@ -36,10 +36,28 @@ export class MailService implements OnModuleInit {
       await this.transporter.sendMail(message);
       return 'Email verification code sent!';
     } catch (error) {
-      console.log(error);
+      this.logger.error(error);
       throw new InternalServerErrorException(
         'Could not send verification email',
       );
+    }
+  }
+
+  async sendPasswordResetEmail(email: string, code: string) {
+    const message = {
+      from: 'support@collabs.com',
+      to: email,
+      subject: 'Password Reset Instructions',
+      text: `Use this code to reset your password: ${code}`,
+      html: `<p>Reset your password with this code: <b>${code}</b>. It expires after 10 minutes!</p>`,
+    };
+
+    try {
+      await this.transporter.sendMail(message);
+      return 'Password reset instructions sent!';
+    } catch (error) {
+      this.logger.error(error);
+      throw new InternalServerErrorException('Could not send email');
     }
   }
 }
