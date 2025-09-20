@@ -87,7 +87,7 @@ export class AuthController {
 
     return {
       status: true,
-      message: "Password updated"
-    }
+      message: 'Password updated',
+    };
   }
 }
