@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreatedBy, CreateProjectDto } from './dto/project-dto';
+import { Prisma } from '@prisma/client';
 
 @Injectable()
 export class ProjectsService {
@@ -142,5 +143,37 @@ export class ProjectsService {
     return this.prisma.project.delete({
       where: { id: project.id },
     });
+  }
+
+  async updateProjectById(
+    signedUserId: number,
+    projectId: number,
+    data: Prisma.ProjectUpdateInput,
+  ) {
+    const project = await this.prisma.project.findUnique({
+      where: { id: projectId },
+    });
+
+    if (!project)
+      throw new NotFoundException('Project with this ID does not exist');
+
+    const member = await this.prisma.collaborator.findFirst({
+      where: { userId: signedUserId },
+    });
+
+    if (!member)
+      throw new NotFoundException('You are not a member of the project');
+
+    if (member.role !== 'ADMIN')
+      throw new ForbiddenException(
+        'You are not allowed to perform this action',
+      );
+
+    const updatedProject = this.prisma.project.update({
+      where: { id: project.id },
+      data,
+    });
+
+    return updatedProject;
   }
 }

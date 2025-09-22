@@ -1,5 +1,6 @@
 import { Type } from 'class-transformer';
 import {
+  IsBoolean,
   IsEmail,
   IsInt,
   IsNotEmpty,
@@ -40,4 +41,18 @@ export class FetchProjectsDto {
   @IsOptional()
   @IsString()
   createdBy: CreatedBy;
+}
+
+export class UpdateProjectDto {
+  @IsOptional()
+  @IsString()
+  name: string;
+
+  @IsOptional()
+  @IsString()
+  description: string;
+
+  @IsOptional()
+  @IsBoolean()
+  isOpen: boolean;
 }

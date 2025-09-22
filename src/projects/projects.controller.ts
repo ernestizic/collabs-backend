@@ -5,6 +5,7 @@ import {
   ForbiddenException,
   Get,
   Param,
+  Patch,
   Post,
   Query,
   Request,
@@ -17,6 +18,7 @@ import {
   AddUserDto,
   CreateProjectDto,
   FetchProjectsDto,
+  UpdateProjectDto,
 } from './dto/project-dto';
 import { type AuthRequest } from 'src/utils/types';
 
@@ -97,15 +99,31 @@ export class ProjectsController {
 
   @Delete(':id')
   async deleteProject(@Param('id') id: string, @Request() req: AuthRequest) {
-    const res = await this.projectsService.deleteProjectById(
-      Number(id),
-      req.user.id,
-    );
-    console.log(res);
+    await this.projectsService.deleteProjectById(Number(id), req.user.id);
 
     return {
       status: true,
       message: 'Project deleted',
+    };
+  }
+
+  @Patch(':id')
+  async updateProject(
+    @Param('id') id: string,
+    @Body() payload: UpdateProjectDto,
+    @Request() req: AuthRequest,
+  ) {
+    const userId = req.user.id;
+    const project = await this.projectsService.updateProjectById(
+      userId,
+      Number(id),
+      payload,
+    );
+
+    return {
+      status: true,
+      message: 'Project updated',
+      data: project,
     };
   }
 }
