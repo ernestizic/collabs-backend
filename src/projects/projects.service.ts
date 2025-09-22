@@ -7,6 +7,7 @@ import {
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreatedBy, CreateProjectDto } from './dto/project-dto';
 import { Prisma } from '@prisma/client';
+import { defaultColumns } from 'src/utils/constants';
 
 @Injectable()
 export class ProjectsService {
@@ -121,6 +122,9 @@ export class ProjectsService {
         ...payload,
         owner: { connect: { id: userId } },
         collaborators: { create: { userId, role: 'ADMIN' } },
+        columns: {
+          create: defaultColumns,
+        },
       },
     });
 
@@ -175,5 +179,12 @@ export class ProjectsService {
     });
 
     return updatedProject;
+  }
+
+  async getAllProjectColumns(id: number) {
+    const columns = await this.prisma.column.findMany({
+      where: { projectId: id },
+    });
+    return columns;
   }
 }

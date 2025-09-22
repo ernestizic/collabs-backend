@@ -18,7 +18,7 @@ export class CreateProjectDto {
 
   @IsString()
   @IsOptional()
-  description: string;
+  description?: string;
 }
 
 export class AddUserDto {
@@ -36,23 +36,23 @@ export class FetchProjectsDto {
   @Type(() => Number)
   @IsOptional()
   @IsInt()
-  page: number;
+  page?: number;
 
   @IsOptional()
   @IsString()
-  createdBy: CreatedBy;
+  createdBy?: CreatedBy;
 }
 
 export class UpdateProjectDto {
   @IsOptional()
   @IsString()
-  name: string;
+  name?: string;
 
   @IsOptional()
   @IsString()
-  description: string;
+  description?: string;
 
   @IsOptional()
   @IsBoolean()
-  isOpen: boolean;
+  isOpen?: boolean;
 }
