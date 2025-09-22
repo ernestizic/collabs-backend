@@ -10,6 +10,8 @@ import {
   Query,
   Request,
   UseGuards,
+  UsePipes,
+  ValidationPipe,
 } from '@nestjs/common';
 import { ProjectsService } from './projects.service';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
@@ -39,6 +41,7 @@ export class ProjectsController {
   }
 
   @Get('user')
+  @UsePipes(ValidationPipe)
   async getAllUserProjects(
     @Query() query: FetchProjectsDto,
     @Request() req: AuthRequest,
@@ -58,6 +61,7 @@ export class ProjectsController {
   }
 
   @Post()
+  @UsePipes(ValidationPipe)
   async createProject(
     @Body() payload: CreateProjectDto,
     @Request() req: AuthRequest,
@@ -75,6 +79,7 @@ export class ProjectsController {
   }
 
   @Post('add-user')
+  @UsePipes(ValidationPipe)
   async addUserToProject(
     @Body() payload: AddUserDto,
     @Request() req: AuthRequest,
@@ -108,6 +113,7 @@ export class ProjectsController {
   }
 
   @Patch(':id')
+  @UsePipes(ValidationPipe)
   async updateProject(
     @Param('id') id: string,
     @Body() payload: UpdateProjectDto,
@@ -124,6 +130,16 @@ export class ProjectsController {
       status: true,
       message: 'Project updated',
       data: project,
+    };
+  }
+
+  @Get(':id/columns')
+  async fetchProjectColumns(@Param('id') id: string) {
+    const columns = await this.projectsService.getAllProjectColumns(Number(id));
+    return {
+      status: true,
+      message: 'Request successful',
+      data: columns,
     };
   }
 }
