@@ -17,23 +17,54 @@ enum VerificationType {
   EMAIL_VERIFICATION
   PASSWORD_RESET
 }
+
+enum MemberRole {
+  ADMIN
+  MEMBER
+}
+
 model User {
-  id                Int                 @id @default(autoincrement())
-  firstname         String
-  lastname          String
-  email             String              @unique
-  password          String
-  email_verified_at DateTime?
-  createdAt         DateTime            @default(now())
-  EmailVerification EmailVerification[]
+  id                 Int                 @id @default(autoincrement())
+  firstname          String
+  lastname           String
+  email              String              @unique
+  password           String
+  email_verified_at  DateTime?
+  createdAt          DateTime            @default(now())
+  EmailVerification  EmailVerification[]
+  projects           Project[]           @relation("OwnedProjects")
+  secondary_projects Collaborator[]
 }
 
 model EmailVerification {
-  id        Int      @id @default(autoincrement())
+  id        Int              @id @default(autoincrement())
   code      String
-  type VerificationType @default(EMAIL_VERIFICATION)
-  createdAt DateTime @default(now())
+  type      VerificationType @default(EMAIL_VERIFICATION)
+  createdAt DateTime         @default(now())
   expiresAt DateTime
   userId    Int
-  user      User     @relation(fields: [userId], references: [id])
+  user      User             @relation(fields: [userId], references: [id])
+}
+
+model Project {
+  id            Int            @id @default(autoincrement())
+  name          String
+  description   String?
+  isOpen        Boolean        @default(true)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  ownerId       Int
+  owner         User           @relation("OwnedProjects", fields: [ownerId], references: [id])
+  collaborators Collaborator[]
+}
+
+model Collaborator {
+  id        Int        @id @default(autoincrement())
+  role      MemberRole @default(MEMBER)
+  userId    Int
+  projectId Int
+  user      User       @relation(fields: [userId], references: [id])
+  project   Project    @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, projectId])
 }
