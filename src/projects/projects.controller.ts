@@ -1,8 +1,10 @@
 import {
   Body,
   Controller,
+  Delete,
   ForbiddenException,
   Get,
+  Param,
   Post,
   Query,
   Request,
@@ -90,6 +92,20 @@ export class ProjectsController {
       status: true,
       message: 'User added successfully',
       data: result,
+    };
+  }
+
+  @Delete(':id')
+  async deleteProject(@Param('id') id: string, @Request() req: AuthRequest) {
+    const res = await this.projectsService.deleteProjectById(
+      Number(id),
+      req.user.id,
+    );
+    console.log(res);
+
+    return {
+      status: true,
+      message: 'Project deleted',
     };
   }
 }

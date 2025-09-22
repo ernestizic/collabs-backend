@@ -1,4 +1,9 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreatedBy, CreateProjectDto } from './dto/project-dto';
 
@@ -40,7 +45,6 @@ export class ProjectsService {
         OR: [{ ownerId: userId }, { collaborators: { some: { userId } } }],
       };
     }
-    console.log(whereCondition);
 
     const [projects, totalProjects] = await Promise.all([
       this.prisma.project.findMany({
@@ -120,5 +124,23 @@ export class ProjectsService {
     });
 
     return newProject;
+  }
+
+  async deleteProjectById(projectId: number, signedUserId: number) {
+    const project = await this.prisma.project.findUnique({
+      where: { id: projectId },
+    });
+
+    if (!project)
+      throw new NotFoundException('Project with this ID does not exist');
+
+    if (signedUserId !== project.ownerId)
+      throw new ForbiddenException(
+        'You are not allowed to perform this action',
+      );
+
+    return this.prisma.project.delete({
+      where: { id: project.id },
+    });
   }
 }
