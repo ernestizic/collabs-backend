@@ -23,11 +23,16 @@ import {
   UpdateProjectDto,
 } from './dto/project-dto';
 import { type AuthRequest } from 'src/utils/types';
+import { TasksService } from 'src/tasks/tasks.service';
+import { CreateTaskDto, GetTasksDto } from 'src/tasks/dto/task-dto';
 
 @Controller('projects')
 @UseGuards(JwtAuthGuard, EmailVerifiedGuard)
 export class ProjectsController {
-  constructor(private projectsService: ProjectsService) {}
+  constructor(
+    private projectsService: ProjectsService,
+    private tasksService: TasksService,
+  ) {}
 
   @Get()
   async getProjects(@Query('page') page: number) {
@@ -133,6 +138,7 @@ export class ProjectsController {
     };
   }
 
+  // GET ALL COLUMNS IN A PROJECT
   @Get(':id/columns')
   async fetchProjectColumns(@Param('id') id: string) {
     const columns = await this.projectsService.getAllProjectColumns(Number(id));
@@ -140,6 +146,41 @@ export class ProjectsController {
       status: true,
       message: 'Request successful',
       data: columns,
+    };
+  }
+
+  // GET ALL TASKS INSIDE OF A PROJECT
+  @Get(':id/tasks')
+  async fetchProjectTasks(
+    @Param('id') id: string,
+    @Query() query: GetTasksDto,
+  ) {
+    const { page, ...restOfQuery } = query;
+    const tasks = await this.tasksService.getAllProjectTasks(
+      Number(id),
+      page,
+      restOfQuery,
+    );
+
+    return {
+      status: true,
+      message: 'Request successful',
+      data: tasks,
+    };
+  }
+
+  // CREATE TASK INSIDE A PROJECT
+  @Post(':id/tasks')
+  async createProjectTask(
+    @Param('id') id: string,
+    @Body() payload: CreateTaskDto,
+  ) {
+    const task = await this.tasksService.createTask(Number(id), payload);
+
+    return {
+      status: true,
+      message: 'Request successful',
+      data: task,
     };
   }
 }

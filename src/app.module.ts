@@ -7,9 +7,17 @@ import { PrismaModule } from './prisma/prisma.module';
 import { MailService } from './mail/mail.service';
 import { MailModule } from './mail/mail.module';
 import { ProjectsModule } from './projects/projects.module';
+import { TasksModule } from './tasks/tasks.module';
 
 @Module({
-  imports: [PrismaModule, UsersModule, AuthModule, MailModule, ProjectsModule],
+  imports: [
+    PrismaModule,
+    UsersModule,
+    AuthModule,
+    MailModule,
+    ProjectsModule,
+    TasksModule,
+  ],
   controllers: [AppController],
   providers: [AppService, MailService],
 })
