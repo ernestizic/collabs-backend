@@ -1,4 +1,9 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { getTaskQueryType, TaskType } from './types/task-types';
 import { CreateTaskDto } from './dto/task-dto';
@@ -8,10 +13,23 @@ export class TasksService {
   constructor(private prismaService: PrismaService) {}
 
   async getAllProjectTasks(
+    userId: number,
     projectId: number,
     page = 1,
     query: getTaskQueryType,
   ) {
+    const member = await this.prismaService.collaborator.findUnique({
+      where: {
+        userId_projectId: {
+          userId: userId,
+          projectId,
+        },
+      },
+    });
+
+    if (!member)
+      throw new ForbiddenException('You are not allowed to view this resource');
+
     const limit = 20;
     const skip = (page - 1) * limit;
 
@@ -49,12 +67,27 @@ export class TasksService {
     };
   }
 
-  async createTask(projectId: number, payload: CreateTaskDto) {
+  async createTask(userId: number, projectId: number, payload: CreateTaskDto) {
+    const member = await this.prismaService.collaborator.findUnique({
+      where: {
+        userId_projectId: {
+          userId: userId,
+          projectId,
+        },
+      },
+    });
+    if (!member)
+      throw new ForbiddenException(
+        'You are not allowed to perform this action',
+      );
+
     const column = await this.prismaService.column.findFirst({
       where: { projectId, position: 1 },
     });
     if (!column)
-      throw new BadRequestException('Task cannot be created outside a column');
+      throw new BadRequestException(
+        'Task cannot be created outside a column. Please add a column',
+      );
 
     const collaborators = await this.prismaService.collaborator.findMany({
       where: {
@@ -84,5 +117,33 @@ export class TasksService {
     });
 
     return newTask;
+  }
+
+  async deleteTask(userId: number, projectId: number, taskId: string) {
+    const member = await this.prismaService.collaborator.findUnique({
+      where: {
+        userId_projectId: {
+          userId: userId,
+          projectId,
+        },
+      },
+    });
+    if (!member)
+      throw new ForbiddenException(
+        'You are not allowed to perform this action',
+      );
+
+    const task = await this.prismaService.task.findUnique({
+      where: { id: taskId },
+      include: { column: { include: { project: true } } },
+    });
+
+    if (!task) throw new NotFoundException('Task not found');
+
+    const res = await this.prismaService.task.delete({
+      where: { id: taskId },
+      include: { column: { include: { project: true } } },
+    });
+    return res;
   }
 }

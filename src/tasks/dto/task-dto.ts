@@ -40,3 +40,14 @@ export class CreateTaskDto {
   @ArrayNotEmpty()
   assignees?: number[];
 }
+
+export class DeleteTaskDto {
+  @Type(() => Number)
+  @IsInt()
+  @IsNotEmpty()
+  projectId: number;
+
+  @IsNotEmpty()
+  @IsString()
+  taskId: string;
+}
