@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { getTaskQueryType, TaskType } from './types/task-types';
-import { CreateTaskDto } from './dto/task-dto';
+import { CreateTaskDto, UpdateTaskDto } from './dto/task-dto';
 
 @Injectable()
 export class TasksService {
@@ -145,5 +145,55 @@ export class TasksService {
       include: { column: { include: { project: true } } },
     });
     return res;
+  }
+
+  async updateTask(
+    userId: number,
+    projectId: number,
+    taskId: string,
+    payload: UpdateTaskDto,
+  ) {
+    const member = await this.prismaService.collaborator.findUnique({
+      where: {
+        userId_projectId: {
+          userId: userId,
+          projectId,
+        },
+      },
+    });
+    if (!member)
+      throw new ForbiddenException(
+        'You are not allowed to perform this action',
+      );
+
+    const project = await this.prismaService.project.findUnique({
+      where: { id: projectId },
+    });
+    if (!project)
+      throw new BadRequestException(
+        'No project found with this ID, please recheck the ID and try again',
+      );
+
+    const task = await this.prismaService.task.findUnique({
+      where: { id: taskId },
+    });
+    if (!task)
+      throw new BadRequestException(
+        'No task found with this ID, please recheck the ID and try again',
+      );
+
+    const updatedTask = await this.prismaService.task.update({
+      where: { id: taskId },
+      data: {
+        title: payload.title,
+        type: payload.type,
+        columnId: payload.columnId,
+      },
+      include: {
+        column: true,
+      },
+    });
+
+    return updatedTask;
   }
 }

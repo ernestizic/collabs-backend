@@ -28,6 +28,8 @@ import {
   CreateTaskDto,
   DeleteTaskDto,
   GetTasksDto,
+  UpdateTaskDto,
+  UpdateTaskParamDto,
 } from 'src/tasks/dto/task-dto';
 
 @Controller('projects')
@@ -225,6 +227,29 @@ export class ProjectsController {
     return {
       status: true,
       message: 'Task deleted successfully',
+    };
+  }
+
+  // UPDATE TASK IN A PROJECT
+  @Patch(':projectId/task/:taskId')
+  async updateTaskById(
+    @Param() param: UpdateTaskParamDto,
+    @Body() payload: UpdateTaskDto,
+    @Request() req: AuthRequest,
+  ) {
+    const { projectId, taskId } = param;
+    const user_id = req.user.id;
+    const updatedTask = await this.tasksService.updateTask(
+      user_id,
+      projectId,
+      taskId,
+      payload,
+    );
+
+    return {
+      status: true,
+      message: 'Task updated successfully',
+      data: updatedTask,
     };
   }
 }

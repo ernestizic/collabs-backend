@@ -51,3 +51,28 @@ export class DeleteTaskDto {
   @IsString()
   taskId: string;
 }
+
+export class UpdateTaskParamDto {
+  @Type(() => Number)
+  @IsInt()
+  @IsNotEmpty()
+  projectId: number;
+
+  @IsNotEmpty()
+  @IsString()
+  taskId: string;
+}
+
+export class UpdateTaskDto {
+  @IsOptional()
+  @IsString()
+  title?: string;
+
+  @IsOptional()
+  @IsEnum(TaskType)
+  type?: TaskType;
+
+  @IsString()
+  @IsOptional()
+  columnId?: string;
+}
