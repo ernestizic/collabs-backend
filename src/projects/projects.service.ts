@@ -181,7 +181,19 @@ export class ProjectsService {
     return updatedProject;
   }
 
-  async getAllProjectColumns(id: number) {
+  async getAllProjectColumns(id: number, userId: number) {
+    const member = await this.prisma.collaborator.findUnique({
+      where: {
+        userId_projectId: {
+          userId: userId,
+          projectId: id,
+        },
+      },
+    });
+
+    if (!member)
+      throw new ForbiddenException('You are not allowed to view this resource');
+
     const columns = await this.prisma.column.findMany({
       where: { projectId: id },
     });

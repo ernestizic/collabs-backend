@@ -23,11 +23,22 @@ import {
   UpdateProjectDto,
 } from './dto/project-dto';
 import { type AuthRequest } from 'src/utils/types';
+import { TasksService } from 'src/tasks/tasks.service';
+import {
+  CreateTaskDto,
+  DeleteTaskDto,
+  GetTasksDto,
+  UpdateTaskDto,
+  UpdateTaskParamDto,
+} from 'src/tasks/dto/task-dto';
 
 @Controller('projects')
 @UseGuards(JwtAuthGuard, EmailVerifiedGuard)
 export class ProjectsController {
-  constructor(private projectsService: ProjectsService) {}
+  constructor(
+    private projectsService: ProjectsService,
+    private tasksService: TasksService,
+  ) {}
 
   @Get()
   async getProjects(@Query('page') page: number) {
@@ -40,6 +51,7 @@ export class ProjectsController {
     };
   }
 
+  // GET ALL USER PROJECTS
   @Get('user')
   @UsePipes(ValidationPipe)
   async getAllUserProjects(
@@ -60,6 +72,7 @@ export class ProjectsController {
     };
   }
 
+  // CREATE A PROJECT
   @Post()
   @UsePipes(ValidationPipe)
   async createProject(
@@ -78,6 +91,7 @@ export class ProjectsController {
     };
   }
 
+  // ADD A USER TO A PROJECT
   @Post('add-user')
   @UsePipes(ValidationPipe)
   async addUserToProject(
@@ -102,6 +116,7 @@ export class ProjectsController {
     };
   }
 
+  // DELETE A PROJECT
   @Delete(':id')
   async deleteProject(@Param('id') id: string, @Request() req: AuthRequest) {
     await this.projectsService.deleteProjectById(Number(id), req.user.id);
@@ -112,6 +127,7 @@ export class ProjectsController {
     };
   }
 
+  // UPDATE A PROJECT
   @Patch(':id')
   @UsePipes(ValidationPipe)
   async updateProject(
@@ -133,13 +149,107 @@ export class ProjectsController {
     };
   }
 
+  // GET ALL COLUMNS IN A PROJECT
   @Get(':id/columns')
-  async fetchProjectColumns(@Param('id') id: string) {
-    const columns = await this.projectsService.getAllProjectColumns(Number(id));
+  async fetchProjectColumns(
+    @Param('id') id: string,
+    @Request() req: AuthRequest,
+  ) {
+    const user_id = req.user.id;
+    const columns = await this.projectsService.getAllProjectColumns(
+      Number(id),
+      user_id,
+    );
     return {
       status: true,
       message: 'Request successful',
       data: columns,
+    };
+  }
+
+  // GET ALL TASKS INSIDE OF A PROJECT
+  @Get(':id/tasks')
+  @UsePipes(ValidationPipe)
+  async fetchProjectTasks(
+    @Param('id') id: string,
+    @Query() query: GetTasksDto,
+    @Request() req: AuthRequest,
+  ) {
+    const user_id = req.user.id;
+    const { page, ...restOfQuery } = query;
+    const tasks = await this.tasksService.getAllProjectTasks(
+      user_id,
+      Number(id),
+      page,
+      restOfQuery,
+    );
+
+    return {
+      status: true,
+      message: 'Request successful',
+      data: tasks,
+    };
+  }
+
+  // CREATE TASK INSIDE A PROJECT
+  @UsePipes(ValidationPipe)
+  @Post(':id/tasks')
+  async createProjectTask(
+    @Param('id') id: string,
+    @Body() payload: CreateTaskDto,
+    @Request() req: AuthRequest,
+  ) {
+    const user_id = req.user.id;
+    const task = await this.tasksService.createTask(
+      user_id,
+      Number(id),
+      payload,
+    );
+
+    return {
+      status: true,
+      message: 'Request successful',
+      data: task,
+    };
+  }
+
+  // DELETE TASK FROM A PROJECT
+  @UsePipes(ValidationPipe)
+  @Delete(':projectId/task/:taskId')
+  async deleteProjectTask(
+    @Param() param: DeleteTaskDto,
+    @Request() req: AuthRequest,
+  ) {
+    const { projectId, taskId } = param;
+    const user_id = req.user.id;
+    await this.tasksService.deleteTask(user_id, projectId, taskId);
+
+    return {
+      status: true,
+      message: 'Task deleted successfully',
+    };
+  }
+
+  // UPDATE TASK IN A PROJECT
+  @Patch(':projectId/task/:taskId')
+  async updateTaskById(
+    @Param() param: UpdateTaskParamDto,
+    @Body() payload: UpdateTaskDto,
+    @Request() req: AuthRequest,
+  ) {
+    const { projectId, taskId } = param;
+    const user_id = req.user.id;
+    const updatedTask = await this.tasksService.updateTask(
+      user_id,
+      projectId,
+      taskId,
+      payload,
+    );
+
+    return {
+      status: true,
+      message: 'Task updated successfully',
+      data: updatedTask,
     };
   }
 }

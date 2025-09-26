@@ -23,6 +23,7 @@ export class AuthController {
   constructor(private authService: AuthService) {}
 
   @UsePipes(ValidationPipe)
+  @HttpCode(HttpStatus.OK)
   @Post('login')
   async login(@Body() loginDto: LoginDto) {
     const { email, password } = loginDto;
