@@ -107,6 +107,8 @@ export class TasksService {
     const newTask = await this.prismaService.task.create({
       data: {
         title: payload.title,
+        description: payload.description,
+        type: payload.type,
         assignees: {
           create: payload.assignees?.map((collaboratorid) => ({
             collaborator: { connect: { id: collaboratorid } },
@@ -186,6 +188,7 @@ export class TasksService {
       where: { id: taskId },
       data: {
         title: payload.title,
+        description: payload.description,
         type: payload.type,
         columnId: payload.columnId,
       },

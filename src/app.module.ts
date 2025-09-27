@@ -9,6 +9,7 @@ import { MailModule } from './mail/mail.module';
 import { ProjectsModule } from './projects/projects.module';
 import { TasksModule } from './tasks/tasks.module';
 import { MembersModule } from './members/members.module';
+import { CommentsModule } from './comments/comments.module';
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { MembersModule } from './members/members.module';
     ProjectsModule,
     TasksModule,
     MembersModule,
+    CommentsModule,
   ],
   controllers: [AppController],
   providers: [AppService, MailService],
