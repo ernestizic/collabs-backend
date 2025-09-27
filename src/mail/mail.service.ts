@@ -60,4 +60,22 @@ export class MailService implements OnModuleInit {
       throw new InternalServerErrorException('Could not send email');
     }
   }
+
+  async sendInviteMail(email: string, code: string) {
+    const message = {
+      from: 'support@collabs.com',
+      to: email,
+      subject: 'Invite to collaborate',
+      text: `You have been invited to collaborate on a project`,
+      html: `<p>You have been invited to collaborate on a project. Click the link below to accept the invite. The link is valid for 10 hours </p> <a href="http://localhost:3000/project/accept-invite?code=${code}" target="_blank" rel="noopener noreferrer">Link</a>`,
+    };
+
+    try {
+      await this.transporter.sendMail(message);
+      return 'Invite sent!';
+    } catch (error) {
+      this.logger.error(error);
+      throw new InternalServerErrorException('Could not send email');
+    }
+  }
 }

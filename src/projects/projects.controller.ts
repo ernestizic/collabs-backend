@@ -2,8 +2,9 @@ import {
   Body,
   Controller,
   Delete,
-  ForbiddenException,
   Get,
+  HttpCode,
+  HttpStatus,
   Param,
   Patch,
   Post,
@@ -17,7 +18,6 @@ import { ProjectsService } from './projects.service';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { EmailVerifiedGuard } from 'src/utils/guards/EmailVerifiedGuard';
 import {
-  AddUserDto,
   CreateProjectDto,
   FetchProjectsDto,
   UpdateProjectDto,
@@ -31,6 +31,8 @@ import {
   UpdateTaskDto,
   UpdateTaskParamDto,
 } from 'src/tasks/dto/task-dto';
+import { MembersService } from 'src/members/members.service';
+import { InviteMemberDto } from 'src/members/dto/members-dto';
 
 @Controller('projects')
 @UseGuards(JwtAuthGuard, EmailVerifiedGuard)
@@ -38,6 +40,7 @@ export class ProjectsController {
   constructor(
     private projectsService: ProjectsService,
     private tasksService: TasksService,
+    private membersService: MembersService,
   ) {}
 
   @Get()
@@ -91,28 +94,34 @@ export class ProjectsController {
     };
   }
 
-  // ADD A USER TO A PROJECT
-  @Post('add-user')
-  @UsePipes(ValidationPipe)
-  async addUserToProject(
-    @Body() payload: AddUserDto,
+  @Post('invite-user')
+  @HttpCode(HttpStatus.OK)
+  async inviteUserToProject(
     @Request() req: AuthRequest,
+    @Body() payload: InviteMemberDto,
   ) {
-    const { email, project_id } = payload;
-
-    // Allow only the user accepting the invite to perform the action
-    if (req.user.email !== email)
-      throw new ForbiddenException("You're not allowed to perform this action");
-
-    const result = await this.projectsService.addUserToProject(
-      email,
-      project_id,
-    );
+    const userId = req.user.id;
+    const res = await this.membersService.sendInviteToUser(userId, payload);
 
     return {
       status: true,
-      message: 'User added successfully',
-      data: result,
+      message: res,
+    };
+  }
+
+  @Post('accept-invite')
+  @HttpCode(HttpStatus.OK)
+  async acceptProjectInvite(
+    @Query('code') code: string,
+    @Request() req: AuthRequest,
+  ) {
+    const userId = req.user.id;
+    const res = await this.membersService.acceptInvite(code, userId);
+
+    return {
+      status: true,
+      message: 'Invite accepted',
+      data: res,
     };
   }
 
