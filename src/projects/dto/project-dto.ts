@@ -21,17 +21,6 @@ export class CreateProjectDto {
   description?: string;
 }
 
-export class AddUserDto {
-  @IsString()
-  @IsNotEmpty()
-  @IsEmail()
-  email: string;
-
-  @IsNumber()
-  @IsNotEmpty()
-  project_id: number;
-}
-
 export class FetchProjectsDto {
   @Type(() => Number)
   @IsOptional()

@@ -1,5 +1,4 @@
 import {
-  BadRequestException,
   ForbiddenException,
   Injectable,
   NotFoundException,
@@ -82,38 +81,6 @@ export class ProjectsService {
         totalPages: Math.ceil(totalProjects / limit),
       },
     };
-  }
-
-  async addUserToProject(email: string, projectId: number) {
-    const project = await this.prisma.project.findUnique({
-      where: { id: projectId },
-    });
-
-    if (!project) throw new BadRequestException('Project does not exist');
-
-    const user = await this.prisma.user.findUnique({ where: { email } });
-    if (!user) throw new BadRequestException('User does not exist');
-
-    const isExistingMember = await this.prisma.collaborator.findUnique({
-      where: {
-        userId_projectId: {
-          userId: user.id,
-          projectId: project.id,
-        },
-      },
-    });
-    if (isExistingMember)
-      throw new BadRequestException(
-        'This user is already a member of this project',
-      );
-
-    const newMember = await this.prisma.collaborator.create({
-      data: {
-        userId: user.id,
-        projectId: project.id,
-      },
-    });
-    return newMember;
   }
 
   async createProject(payload: CreateProjectDto, userId: number) {
