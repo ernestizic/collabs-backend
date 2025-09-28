@@ -1,14 +1,20 @@
 import {
   ForbiddenException,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateCommentDto } from './dto/comments.dto';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 
 @Injectable()
 export class CommentsService {
-  constructor(private readonly prisma: PrismaService) {}
+  private logger = new Logger(CommentsService.name);
+  constructor(
+    private readonly prisma: PrismaService,
+    private eventEmitter: EventEmitter2,
+  ) {}
 
   async getComments(taskId: string, page = 1) {
     const limit = 20;
@@ -57,6 +63,10 @@ export class CommentsService {
         user: { connect: { id: userId } },
         task: { connect: { id: task.id } },
       },
+    });
+    this.eventEmitter.emit('comment.created', {
+      taskId: taskId,
+      comment: newComment,
     });
     return newComment;
   }
