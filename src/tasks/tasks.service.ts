@@ -107,6 +107,8 @@ export class TasksService {
     const newTask = await this.prismaService.task.create({
       data: {
         title: payload.title,
+        description: payload.description,
+        type: payload.type,
         assignees: {
           create: payload.assignees?.map((collaboratorid) => ({
             collaborator: { connect: { id: collaboratorid } },
@@ -135,14 +137,11 @@ export class TasksService {
 
     const task = await this.prismaService.task.findUnique({
       where: { id: taskId },
-      include: { column: { include: { project: true } } },
     });
-
     if (!task) throw new NotFoundException('Task not found');
 
     const res = await this.prismaService.task.delete({
       where: { id: taskId },
-      include: { column: { include: { project: true } } },
     });
     return res;
   }
@@ -186,6 +185,7 @@ export class TasksService {
       where: { id: taskId },
       data: {
         title: payload.title,
+        description: payload.description,
         type: payload.type,
         columnId: payload.columnId,
       },

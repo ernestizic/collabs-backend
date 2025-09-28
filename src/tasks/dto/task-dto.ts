@@ -30,6 +30,10 @@ export class CreateTaskDto {
   @IsNotEmpty()
   title: string;
 
+  @IsString()
+  @IsOptional()
+  description?: string;
+
   @IsEnum(TaskType)
   @IsOptional()
   type?: TaskType;
@@ -67,6 +71,10 @@ export class UpdateTaskDto {
   @IsOptional()
   @IsString()
   title?: string;
+
+  @IsString()
+  @IsOptional()
+  description?: string;
 
   @IsOptional()
   @IsEnum(TaskType)

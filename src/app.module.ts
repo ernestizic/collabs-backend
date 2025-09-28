@@ -9,6 +9,9 @@ import { MailModule } from './mail/mail.module';
 import { ProjectsModule } from './projects/projects.module';
 import { TasksModule } from './tasks/tasks.module';
 import { MembersModule } from './members/members.module';
+import { CommentsModule } from './comments/comments.module';
+import { PusherModule } from './pusher/pusher.module';
+import { EventEmitterModule } from '@nestjs/event-emitter';
 
 @Module({
   imports: [
@@ -19,6 +22,9 @@ import { MembersModule } from './members/members.module';
     ProjectsModule,
     TasksModule,
     MembersModule,
+    CommentsModule,
+    PusherModule,
+    EventEmitterModule.forRoot(),
   ],
   controllers: [AppController],
   providers: [AppService, MailService],
