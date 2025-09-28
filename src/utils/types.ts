@@ -1,6 +1,6 @@
 import { Request } from 'express';
 
-export type RequestUser = {
+export type SignedUser = {
   id: number;
   firstname: string;
   lastname: string;
@@ -12,5 +12,5 @@ export type RequestUser = {
 };
 
 export interface AuthRequest extends Request {
-  user: RequestUser;
+  user: SignedUser;
 }
