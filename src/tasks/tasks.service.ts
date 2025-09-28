@@ -137,14 +137,11 @@ export class TasksService {
 
     const task = await this.prismaService.task.findUnique({
       where: { id: taskId },
-      include: { column: { include: { project: true } } },
     });
-
     if (!task) throw new NotFoundException('Task not found');
 
     const res = await this.prismaService.task.delete({
       where: { id: taskId },
-      include: { column: { include: { project: true } } },
     });
     return res;
   }
