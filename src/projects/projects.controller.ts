@@ -23,7 +23,6 @@ import {
   UpdateProjectDto,
 } from './dto/project-dto';
 import { type AuthRequest } from 'src/utils/types';
-import { TasksService } from 'src/tasks/tasks.service';
 import { MembersService } from 'src/members/members.service';
 import { InviteMemberDto } from 'src/members/dto/members-dto';
 
@@ -32,7 +31,6 @@ import { InviteMemberDto } from 'src/members/dto/members-dto';
 export class ProjectsController {
   constructor(
     private projectsService: ProjectsService,
-    private tasksService: TasksService,
     private membersService: MembersService,
   ) {}
 
