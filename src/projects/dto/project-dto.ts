@@ -45,3 +45,16 @@ export class UpdateProjectDto {
   @IsBoolean()
   isOpen?: boolean;
 }
+
+export class CreateColumnDto {
+  @IsOptional()
+  @IsString()
+  name: string;
+
+  @IsOptional()
+  @IsString()
+  description?: string;
+
+  @IsString()
+  identifier: string;
+}

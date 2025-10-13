@@ -19,6 +19,7 @@ import { ProjectsService } from './projects.service';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { EmailVerifiedGuard } from 'src/utils/guards/EmailVerifiedGuard';
 import {
+  CreateColumnDto,
   CreateProjectDto,
   FetchProjectsDto,
   UpdateProjectDto,
@@ -178,6 +179,26 @@ export class ProjectsController {
       status: true,
       message: 'Request successful',
       data: columns,
+    };
+  }
+
+  @Post(':id/create-column')
+  async createColum(
+    @Param('id') id: string,
+    @Body() payload: CreateColumnDto,
+    @Req() req: AuthRequest,
+  ) {
+    const userId = req.user.id;
+    const column = await this.projectsService.createProjectColumn(
+      Number(id),
+      userId,
+      payload,
+    );
+
+    return {
+      status: true,
+      message: 'Column created',
+      data: column,
     };
   }
 }

@@ -1,15 +1,21 @@
 import {
   ForbiddenException,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { CreatedBy, CreateProjectDto } from './dto/project-dto';
+import {
+  CreateColumnDto,
+  CreatedBy,
+  CreateProjectDto,
+} from './dto/project-dto';
 import { Prisma } from '@prisma/client';
 import { defaultColumns } from 'src/utils/constants';
 
 @Injectable()
 export class ProjectsService {
+  private logger = new Logger(ProjectsService.name);
   constructor(private prisma: PrismaService) {}
 
   async getAllProjects(page = 1) {
@@ -169,6 +175,42 @@ export class ProjectsService {
     });
 
     return updatedProject;
+  }
+
+  async createProjectColumn(
+    projectId: number,
+    userId: number,
+    payload: CreateColumnDto,
+  ) {
+    const project = await this.prisma.project.findUnique({
+      where: { id: projectId },
+      include: { collaborators: true },
+    });
+    if (!project)
+      throw new NotFoundException('Project with this ID does not exist');
+    const exists = project.collaborators.find(
+      (member) => member.userId === userId,
+    );
+    if (!exists)
+      throw new ForbiddenException('You are not allowed to view this resource');
+
+    const highestPosition = await this.prisma.column.aggregate({
+      _max: { position: true },
+      where: { projectId: project.id },
+    });
+
+    const newColumn = this.prisma.column.create({
+      data: {
+        ...payload,
+        position:
+          highestPosition._max.position !== null
+            ? highestPosition._max.position + 1
+            : 1,
+        project: { connect: { id: project.id } },
+      },
+    });
+
+    return newColumn;
   }
 
   async getAllProjectColumns(id: number, userId: number) {
