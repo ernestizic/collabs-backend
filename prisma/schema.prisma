@@ -83,6 +83,7 @@ model Column {
   name         String
   description  String?
   position     Int
+  identifier   String?
   column_limit Int?
   project      Project @relation(fields: [projectId], references: [id])
   projectId    Int

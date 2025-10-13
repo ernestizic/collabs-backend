@@ -43,6 +43,10 @@ export class CreateTaskDto {
   @IsInt({ each: true })
   @ArrayNotEmpty()
   assignees?: number[];
+
+  @IsString()
+  @IsOptional()
+  columnId?: string;
 }
 
 export class DeleteTaskDto {

@@ -68,6 +68,7 @@ export class TasksService {
   }
 
   async createTask(userId: number, projectId: number, payload: CreateTaskDto) {
+    let columnId: string;
     const member = await this.prismaService.collaborator.findUnique({
       where: {
         userId_projectId: {
@@ -81,13 +82,22 @@ export class TasksService {
         'You are not allowed to perform this action',
       );
 
-    const column = await this.prismaService.column.findFirst({
-      where: { projectId, position: 1 },
-    });
-    if (!column)
-      throw new BadRequestException(
-        'Task cannot be created outside a column. Please add a column',
-      );
+    if (payload.columnId) {
+      const column = await this.prismaService.column.findUnique({
+        where: { id: payload.columnId },
+      });
+      if (!column) throw new NotFoundException('Column not found');
+      columnId = column.id;
+    } else {
+      const column = await this.prismaService.column.findFirst({
+        where: { projectId, position: 1 },
+      });
+      if (!column)
+        throw new BadRequestException(
+          'Task cannot be created outside a column. Please add a column',
+        );
+      columnId = column.id;
+    }
 
     const collaborators = await this.prismaService.collaborator.findMany({
       where: {
@@ -114,7 +124,7 @@ export class TasksService {
             collaborator: { connect: { id: collaboratorid } },
           })),
         },
-        column: { connect: { id: column.id } },
+        column: { connect: { id: columnId } },
       },
     });
 

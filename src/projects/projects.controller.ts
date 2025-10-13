@@ -9,6 +9,7 @@ import {
   Patch,
   Post,
   Query,
+  Req,
   Request,
   UseGuards,
   UsePipes,
@@ -63,6 +64,19 @@ export class ProjectsController {
       status: true,
       message: 'Request successful',
       data: projects,
+    };
+  }
+
+  // Get project by ID
+  @Get(':id')
+  async getProjectById(@Param('id') id: number, @Req() req: AuthRequest) {
+    const userId = req.user.id;
+    const project = await this.projectsService.getSingleProject(id, userId);
+
+    return {
+      status: true,
+      message: 'Project retrived successfully',
+      data: project,
     };
   }
 

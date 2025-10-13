@@ -53,18 +53,19 @@ export class ProjectsService {
         take: limit,
         // eslint-disable-next-line
         where: whereCondition,
-        include: {
-          collaborators: {
-            include: {
-              user: {
-                select: {
-                  firstname: true,
-                  lastname: true,
-                },
-              },
-            },
-          },
-        },
+        // include: {
+        //   collaborators: {
+        //     include: {
+        //       user: {
+        //         select: {
+        //           firstname: true,
+        //           lastname: true,
+        //         },
+        //       },
+        //     },
+        //   },
+        // },
+        orderBy: { createdAt: 'desc' },
       }),
       this.prisma.project.count({
         // eslint-disable-next-line
@@ -81,6 +82,28 @@ export class ProjectsService {
         totalPages: Math.ceil(totalProjects / limit),
       },
     };
+  }
+
+  async getSingleProject(id: number, userId: number) {
+    const project = await this.prisma.project.findUnique({
+      where: { id: id },
+      include: {
+        collaborators: {
+          include: { user: { select: { firstname: true, lastname: true } } },
+        },
+      },
+    });
+
+    if (!project)
+      throw new NotFoundException('Project with this ID does not exist');
+
+    const exists = project.collaborators.find(
+      (member) => member.userId === userId,
+    );
+    if (!exists)
+      throw new ForbiddenException('You are not allowed to view this resource');
+
+    return project;
   }
 
   async createProject(payload: CreateProjectDto, userId: number) {
@@ -163,6 +186,7 @@ export class ProjectsService {
 
     const columns = await this.prisma.column.findMany({
       where: { projectId: id },
+      orderBy: { position: 'asc' },
     });
     return columns;
   }
