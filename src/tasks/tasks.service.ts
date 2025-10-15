@@ -90,7 +90,8 @@ export class TasksService {
       columnId = column.id;
     } else {
       const column = await this.prismaService.column.findFirst({
-        where: { projectId, position: 1 },
+        where: { projectId },
+        orderBy: { position: 'asc' },
       });
       if (!column)
         throw new BadRequestException(

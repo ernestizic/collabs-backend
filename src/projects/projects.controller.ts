@@ -8,6 +8,7 @@ import {
   Param,
   Patch,
   Post,
+  Put,
   Query,
   Req,
   Request,
@@ -22,6 +23,8 @@ import {
   CreateColumnDto,
   CreateProjectDto,
   FetchProjectsDto,
+  UpdateColumnDto,
+  UpdateColumnPositionsDto,
   UpdateProjectDto,
 } from './dto/project-dto';
 import { type AuthRequest } from 'src/utils/types';
@@ -199,6 +202,54 @@ export class ProjectsController {
       status: true,
       message: 'Column created',
       data: column,
+    };
+  }
+
+  @Delete(':projectId/column/:columnId')
+  async deleteColumn(
+    @Param() param: { projectId: string; columnId: string },
+    @Req() req: AuthRequest,
+  ) {
+    const userId = req.user.id;
+    await this.projectsService.deleteColumn(param.columnId, userId);
+
+    return {
+      status: true,
+      message: 'Column deleted',
+    };
+  }
+
+  @Patch(':projectId/column/:columnId')
+  async updateColumn(
+    @Param() param: { projectId: string; columnId: string },
+    @Body() payload: UpdateColumnDto,
+    @Req() req: AuthRequest,
+  ) {
+    const userId = req.user.id;
+    await this.projectsService.updateColumn(payload, param.columnId, userId);
+
+    return {
+      status: true,
+      message: 'Column updated',
+    };
+  }
+
+  @Put(':projectId/columns')
+  async updateColumnsPosition(
+    @Param() param: { projectId: string },
+    @Body() payload: UpdateColumnPositionsDto,
+    @Req() req: AuthRequest,
+  ) {
+    const userId = req.user.id;
+    await this.projectsService.updateColumnsPosition(
+      userId,
+      Number(param.projectId),
+      payload.changed_columns,
+    );
+
+    return {
+      status: true,
+      message: 'Column updated',
     };
   }
 }

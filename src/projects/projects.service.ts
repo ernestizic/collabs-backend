@@ -1,4 +1,5 @@
 import {
+  ConflictException,
   ForbiddenException,
   Injectable,
   Logger,
@@ -12,11 +13,16 @@ import {
 } from './dto/project-dto';
 import { Prisma } from '@prisma/client';
 import { defaultColumns } from 'src/utils/constants';
+import { EventEmitter2 } from '@nestjs/event-emitter';
+import { ColumnType } from './dto/types';
 
 @Injectable()
 export class ProjectsService {
   private logger = new Logger(ProjectsService.name);
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private eventEmitter: EventEmitter2,
+  ) {}
 
   async getAllProjects(page = 1) {
     const limit = 20;
@@ -199,7 +205,7 @@ export class ProjectsService {
       where: { projectId: project.id },
     });
 
-    const newColumn = this.prisma.column.create({
+    const newColumn = await this.prisma.column.create({
       data: {
         ...payload,
         position:
@@ -210,7 +216,121 @@ export class ProjectsService {
       },
     });
 
+    this.eventEmitter.emit('column.created', {
+      projectId: project.id,
+      column: newColumn,
+    });
+
     return newColumn;
+  }
+
+  async updateColumn(
+    payload: Prisma.ColumnUpdateInput,
+    columnId: string,
+    userId: number,
+  ) {
+    const column = await this.prisma.column.findUnique({
+      where: { id: columnId },
+      include: { project: { include: { collaborators: true } } },
+    });
+    const isMember = column?.project.collaborators.find(
+      (item) => item.userId === userId,
+    );
+    if (!column)
+      throw new ForbiddenException('Column with this ID does not exist');
+    if (!isMember)
+      throw new ForbiddenException(
+        'You are not allowed to perform this action',
+      );
+
+    const updatedColumn = await this.prisma.column.update({
+      where: { id: column.id },
+      data: {
+        name: payload.name,
+        description: payload.description,
+        column_limit: payload.column_limit,
+        identifier: payload.identifier,
+      },
+    });
+
+    this.eventEmitter.emit('column.updated', {
+      projectId: column.project.id,
+      column: updatedColumn,
+    });
+
+    return updatedColumn;
+  }
+
+  async updateColumnsPosition(
+    userId: number,
+    projectId: number,
+    changedColumns: ColumnType[],
+  ) {
+    const project = await this.prisma.project.findUnique({
+      where: { id: projectId },
+      include: { collaborators: true },
+    });
+    const isMember = project?.collaborators.find(
+      (member) => member.userId === userId,
+    );
+
+    if (!project)
+      throw new NotFoundException('Project with this ID does not exist');
+    if (!isMember)
+      throw new ForbiddenException(
+        'You are not allowed to perform this action',
+      );
+
+    try {
+      const res = await this.prisma.$transaction(
+        changedColumns.map((col) => {
+          return this.prisma.column.update({
+            where: { id_updatedAt: { id: col.id, updatedAt: col.updatedAt } },
+            data: { position: col.position },
+          });
+        }),
+      );
+
+      this.eventEmitter.emit('column.updated', {
+        projectId: project.id,
+        column: res[0],
+      });
+
+      return res;
+    } catch (error) {
+      this.logger.error(error);
+      throw new ConflictException(
+        error,
+        'Failed to update column positions. A column is being updated by another user. Please refresh and try again',
+      );
+    }
+  }
+
+  async deleteColumn(columnId: string, userId: number) {
+    const column = await this.prisma.column.findUnique({
+      where: { id: columnId },
+      include: { project: { include: { collaborators: true } } },
+    });
+    const isMember = column?.project.collaborators.find(
+      (item) => item.userId === userId,
+    );
+    if (!column)
+      throw new ForbiddenException('Column with this ID does not exist');
+    if (!isMember)
+      throw new ForbiddenException(
+        'You are not allowed to perform this action',
+      );
+
+    const deletedColumn = await this.prisma.column.delete({
+      where: { id: column.id },
+    });
+
+    this.eventEmitter.emit('column.deleted', {
+      projectId: column.project.id,
+      column: deletedColumn,
+    });
+
+    return deletedColumn;
   }
 
   async getAllProjectColumns(id: number, userId: number) {
