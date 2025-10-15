@@ -100,7 +100,12 @@ export class AuthService {
       omit: { password: true },
     });
 
-    return updatedUser;
+    const access_token = await this.jwtService.signAsync(updatedUser);
+
+    return {
+      user: updatedUser,
+      access_token,
+    };
   }
 
   async signUp(payload: Prisma.UserCreateInput) {
