@@ -29,15 +29,14 @@ export class AuthService {
     const { password, ...result } = user;
     const passwordMatch = await bcrypt.compare(pass, password);
 
-    if (passwordMatch) {
-      const loggedUser = {
-        ...result,
-        access_token: await this.jwtService.signAsync(result),
-      };
-      return loggedUser;
-    } else {
+    if (!passwordMatch)
       throw new UnauthorizedException('Password is incorrect');
-    }
+
+    const access_token = await this.jwtService.signAsync(result);
+    return {
+      user: result,
+      access_token,
+    };
   }
 
   async sendVerificationCode(email: string) {
@@ -63,7 +62,11 @@ export class AuthService {
     });
 
     // send email
-    await this.mailService.sendEmailVerificationEmail(user.email, code);
+    this.mailService
+      .sendEmailVerificationEmail(user.email, code)
+      .catch((err) => {
+        this.logger.error(err);
+      });
 
     return { message: 'Verification code sent' };
   }
@@ -75,6 +78,9 @@ export class AuthService {
     });
 
     if (!user) throw new BadRequestException('User not found');
+
+    if (user.email_verified_at !== null)
+      throw new BadRequestException('This email is already verified');
 
     const latestCode = await this.prisma.emailVerification.findFirst({
       where: { userId: user.id, type: 'EMAIL_VERIFICATION' },
@@ -88,12 +94,13 @@ export class AuthService {
     if (latestCode.expiresAt < new Date())
       throw new BadRequestException('This code has expired');
 
-    await this.prisma.user.update({
+    const updatedUser = await this.prisma.user.update({
       where: { id: user.id },
       data: { email_verified_at: new Date() },
+      omit: { password: true },
     });
 
-    return 'Email verification successful';
+    return updatedUser;
   }
 
   async signUp(payload: Prisma.UserCreateInput) {
@@ -117,19 +124,19 @@ export class AuthService {
     const newUser = await this.prisma.user.create({ data: secureUserData });
     const { password: _, ...restOfUser } = newUser;
 
-    const signedUser = {
-      ...restOfUser,
-      access_token: await this.jwtService.signAsync(restOfUser),
-    };
+    const access_token = await this.jwtService.signAsync(restOfUser);
 
     // send user email verification code
-    //add this to background job (queue) to avoid delay or fire & forget - no await
+    // TODO - add this to jobs later
     this.sendVerificationCode(email).catch((err) =>
       this.logger.error('Failed to send verification email', err),
     );
 
     // login user
-    return signedUser;
+    return {
+      user: restOfUser,
+      access_token,
+    };
   }
 
   async sendPasswordResetEmail(email: string) {
@@ -184,5 +191,16 @@ export class AuthService {
       data: { password: hashedPassword },
     });
     return 'Password updated';
+  }
+
+  async getUser(userId: number) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      omit: { password: true },
+    });
+
+    if (!user) throw new NotFoundException('User not found!');
+
+    return user;
   }
 }

@@ -14,7 +14,7 @@ import { MailModule } from 'src/mail/mail.module';
     JwtModule.register({
       global: true,
       secret: process.env.JWT_SECRET,
-      signOptions: { expiresIn: '2 days' },
+      signOptions: { expiresIn: '7 days' },
     }),
   ],
   controllers: [AuthController],

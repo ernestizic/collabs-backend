@@ -27,4 +27,31 @@ export class PusherService {
         this.logger.error(error);
       });
   }
+
+  async broadcastDeletedColumn(projectId: number, data: { deleted: boolean }) {
+    return this.pusher
+      .trigger(`private-project-${projectId}`, 'column-deleted', {
+        deleted: data.deleted,
+        projectId,
+      })
+      .catch((error) => {
+        this.logger.error(error);
+      });
+  }
+
+  async broadcastCreatedColumn(projectId: number, data: any) {
+    return this.pusher
+      .trigger(`private-project-${projectId}`, 'column-created', data)
+      .catch((error) => {
+        this.logger.error(error);
+      });
+  }
+
+  async broadcastUpdatedColumn(projectId: number, data: any) {
+    return this.pusher
+      .trigger(`private-project-${projectId}`, 'column-updated', data)
+      .catch((error) => {
+        this.logger.error(error);
+      });
+  }
 }

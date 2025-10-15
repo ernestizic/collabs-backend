@@ -8,7 +8,9 @@ import {
   Param,
   Patch,
   Post,
+  Put,
   Query,
+  Req,
   Request,
   UseGuards,
   UsePipes,
@@ -18,8 +20,11 @@ import { ProjectsService } from './projects.service';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { EmailVerifiedGuard } from 'src/utils/guards/EmailVerifiedGuard';
 import {
+  CreateColumnDto,
   CreateProjectDto,
   FetchProjectsDto,
+  UpdateColumnDto,
+  UpdateColumnPositionsDto,
   UpdateProjectDto,
 } from './dto/project-dto';
 import { type AuthRequest } from 'src/utils/types';
@@ -63,6 +68,19 @@ export class ProjectsController {
       status: true,
       message: 'Request successful',
       data: projects,
+    };
+  }
+
+  // Get project by ID
+  @Get(':id')
+  async getProjectById(@Param('id') id: number, @Req() req: AuthRequest) {
+    const userId = req.user.id;
+    const project = await this.projectsService.getSingleProject(id, userId);
+
+    return {
+      status: true,
+      message: 'Project retrived successfully',
+      data: project,
     };
   }
 
@@ -164,6 +182,74 @@ export class ProjectsController {
       status: true,
       message: 'Request successful',
       data: columns,
+    };
+  }
+
+  @Post(':id/create-column')
+  async createColum(
+    @Param('id') id: string,
+    @Body() payload: CreateColumnDto,
+    @Req() req: AuthRequest,
+  ) {
+    const userId = req.user.id;
+    const column = await this.projectsService.createProjectColumn(
+      Number(id),
+      userId,
+      payload,
+    );
+
+    return {
+      status: true,
+      message: 'Column created',
+      data: column,
+    };
+  }
+
+  @Delete(':projectId/column/:columnId')
+  async deleteColumn(
+    @Param() param: { projectId: string; columnId: string },
+    @Req() req: AuthRequest,
+  ) {
+    const userId = req.user.id;
+    await this.projectsService.deleteColumn(param.columnId, userId);
+
+    return {
+      status: true,
+      message: 'Column deleted',
+    };
+  }
+
+  @Patch(':projectId/column/:columnId')
+  async updateColumn(
+    @Param() param: { projectId: string; columnId: string },
+    @Body() payload: UpdateColumnDto,
+    @Req() req: AuthRequest,
+  ) {
+    const userId = req.user.id;
+    await this.projectsService.updateColumn(payload, param.columnId, userId);
+
+    return {
+      status: true,
+      message: 'Column updated',
+    };
+  }
+
+  @Put(':projectId/columns')
+  async updateColumnsPosition(
+    @Param() param: { projectId: string },
+    @Body() payload: UpdateColumnPositionsDto,
+    @Req() req: AuthRequest,
+  ) {
+    const userId = req.user.id;
+    await this.projectsService.updateColumnsPosition(
+      userId,
+      Number(param.projectId),
+      payload.changed_columns,
+    );
+
+    return {
+      status: true,
+      message: 'Column updated',
     };
   }
 }
