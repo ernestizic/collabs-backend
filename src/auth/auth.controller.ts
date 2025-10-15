@@ -53,7 +53,7 @@ export class AuthController {
 
     return {
       status: true,
-      message: 'Login successfull',
+      message: 'Login successful',
       data: user,
     };
   }
@@ -76,7 +76,7 @@ export class AuthController {
     });
     return {
       status: true,
-      message: 'User creation successfull',
+      message: 'User creation successful',
       data: user,
     };
   }
@@ -101,9 +101,24 @@ export class AuthController {
 
   @Post('verify-code')
   @UsePipes(ValidationPipe)
-  async verifyEmail(@Body() payload: VerifyEmailDto) {
+  async verifyEmail(
+    @Body() payload: VerifyEmailDto,
+    @Res({ passthrough: true }) res: Response,
+  ) {
     const { email, code } = payload;
-    const user = await this.authService.verifyCode(email, code);
+
+    const { user, access_token } = await this.authService.verifyCode(
+      email,
+      code,
+    );
+
+    res.cookie('access_token', access_token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+      path: '/',
+    });
 
     return {
       status: true,
