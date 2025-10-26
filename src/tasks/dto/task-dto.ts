@@ -9,8 +9,7 @@ import {
   IsOptional,
   IsString,
 } from 'class-validator';
-import { TaskType } from '../types/task-types';
-import { TaskPriority } from '@prisma/client';
+import { TaskPriority, TaskType } from '../types/task-types';
 
 export class GetTasksDto {
   @Type(() => Number)
