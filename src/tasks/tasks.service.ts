@@ -7,10 +7,14 @@ import {
 import { PrismaService } from 'src/prisma/prisma.service';
 import { getTaskQueryType, TaskType } from './types/task-types';
 import { CreateTaskDto, UpdateTaskDto } from './dto/task-dto';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 
 @Injectable()
 export class TasksService {
-  constructor(private prismaService: PrismaService) {}
+  constructor(
+    private prismaService: PrismaService,
+    private eventEmitter: EventEmitter2,
+  ) {}
 
   async getAllProjectTasks(
     userId: number,
@@ -149,6 +153,8 @@ export class TasksService {
         column: { connect: { id: columnId } },
       },
     });
+
+    this.eventEmitter.emit('task.created', { projectId, task: newTask });
 
     return newTask;
   }

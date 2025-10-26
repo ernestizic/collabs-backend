@@ -54,4 +54,12 @@ export class PusherService {
         this.logger.error(error);
       });
   }
+
+  async broadcastCreatedTask(projectId: number, task: any) {
+    return this.pusher
+      .trigger(`private-project-${projectId}`, 'task-created', task)
+      .catch((error) => {
+        this.logger.error(error);
+      });
+  }
 }
