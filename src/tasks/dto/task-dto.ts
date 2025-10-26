@@ -2,6 +2,7 @@ import { Type } from 'class-transformer';
 import {
   ArrayNotEmpty,
   IsArray,
+  IsDate,
   IsEnum,
   IsInt,
   IsNotEmpty,
@@ -9,6 +10,7 @@ import {
   IsString,
 } from 'class-validator';
 import { TaskType } from '../types/task-types';
+import { TaskPriority } from '@prisma/client';
 
 export class GetTasksDto {
   @Type(() => Number)
@@ -47,6 +49,20 @@ export class CreateTaskDto {
   @IsString()
   @IsOptional()
   columnId?: string;
+
+  @IsEnum(TaskPriority)
+  @IsOptional()
+  priority?: TaskPriority;
+
+  @IsDate()
+  @IsOptional()
+  @Type(() => Date)
+  startDate?: Date;
+
+  @IsDate()
+  @IsOptional()
+  @Type(() => Date)
+  endDate?: Date;
 }
 
 export class DeleteTaskDto {

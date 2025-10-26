@@ -50,6 +50,18 @@ export class TasksService {
         where: { column: { projectId }, ...filterParams },
         skip,
         take: limit,
+        orderBy: { createdAt: 'desc' },
+        include: {
+          assignees: {
+            include: {
+              collaborator: {
+                include: {
+                  user: { select: { firstname: true, lastname: true } },
+                },
+              },
+            },
+          },
+        },
       }),
       this.prismaService.task.count({
         where: { column: { projectId }, ...filterParams },
@@ -100,6 +112,12 @@ export class TasksService {
       columnId = column.id;
     }
 
+    if (payload.startDate && payload.endDate) {
+      if (payload.startDate > payload.endDate) {
+        throw new BadRequestException('Start date must come before end date');
+      }
+    }
+
     const collaborators = await this.prismaService.collaborator.findMany({
       where: {
         id: { in: payload.assignees },
@@ -120,6 +138,9 @@ export class TasksService {
         title: payload.title,
         description: payload.description,
         type: payload.type,
+        priority: payload.priority,
+        startDate: payload.startDate,
+        endDate: payload.endDate,
         assignees: {
           create: payload.assignees?.map((collaboratorid) => ({
             collaborator: { connect: { id: collaboratorid } },

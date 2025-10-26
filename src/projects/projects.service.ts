@@ -349,7 +349,18 @@ export class ProjectsService {
     const columns = await this.prisma.column.findMany({
       where: { projectId: id },
       orderBy: { position: 'asc' },
+      include: {
+        _count: {
+          select: { tasks: true },
+        },
+      },
     });
-    return columns;
+    return columns.map((col) => {
+      const { _count, ...rest } = col;
+      return {
+        ...rest,
+        taskCount: _count.tasks,
+      };
+    });
   }
 }
