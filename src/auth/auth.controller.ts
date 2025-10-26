@@ -43,18 +43,19 @@ export class AuthController {
       password,
     );
 
-    res.cookie('access_token', access_token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-      path: '/',
-    });
+    // res.cookie('access_token', access_token, {
+    //   httpOnly: true,
+    //   secure: process.env.NODE_ENV === 'production',
+    //   sameSite: 'lax',
+    //   maxAge: 7 * 24 * 60 * 60 * 1000,
+    //   path: '/',
+    // });
 
     return {
       status: true,
       message: 'Login successful',
       data: user,
+      access_token,
     };
   }
 
@@ -67,17 +68,18 @@ export class AuthController {
   ) {
     const { user, access_token } = await this.authService.signUp(signupDto);
 
-    res.cookie('access_token', access_token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-      path: '/',
-    });
+    // res.cookie('access_token', access_token, {
+    //   httpOnly: true,
+    //   secure: process.env.NODE_ENV === 'production',
+    //   sameSite: 'lax',
+    //   maxAge: 7 * 24 * 60 * 60 * 1000,
+    //   path: '/',
+    // });
     return {
       status: true,
       message: 'User creation successful',
       data: user,
+      access_token,
     };
   }
 
@@ -112,18 +114,19 @@ export class AuthController {
       code,
     );
 
-    res.cookie('access_token', access_token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-      path: '/',
-    });
+    // res.cookie('access_token', access_token, {
+    //   httpOnly: true,
+    //   secure: process.env.NODE_ENV === 'production',
+    //   sameSite: 'lax',
+    //   maxAge: 7 * 24 * 60 * 60 * 1000,
+    //   path: '/',
+    // });
 
     return {
       status: true,
       message: 'Email verification successful',
       data: user,
+      access_token,
     };
   }
 

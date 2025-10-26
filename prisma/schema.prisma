@@ -29,6 +29,12 @@ enum TaskType {
   TASK
 }
 
+enum TaskPriority {
+  HIGH
+  MEDIUM
+  LOW
+}
+
 model User {
   id                 Int                 @id @default(autoincrement())
   firstname          String
@@ -103,6 +109,9 @@ model Task {
   columnId    String
   assignees   TaskAssignment[]
   comments    Comment[]
+  priority    TaskPriority?
+  startDate   DateTime?
+  endDate     DateTime?
   createdAt   DateTime         @default(now())
   updatedAt   DateTime         @default(now()) @updatedAt
 }
