@@ -151,6 +151,7 @@ export class TasksService {
           })),
         },
         column: { connect: { id: columnId } },
+        createdBy: { connect: { id: member.id } },
       },
     });
 
@@ -233,5 +234,31 @@ export class TasksService {
     });
 
     return updatedTask;
+  }
+
+  async getTaskById(taskId: string, userId: number, projectId: number) {
+    const member = await this.prismaService.collaborator.findUnique({
+      where: {
+        userId_projectId: {
+          userId: userId,
+          projectId,
+        },
+      },
+    });
+    if (!member)
+      throw new ForbiddenException(
+        'You are not allowed to perform this action',
+      );
+
+    const task = await this.prismaService.task.findUnique({
+      where: { id: taskId },
+      include: {
+        column: { select: { name: true, identifier: true } },
+        assignees: true,
+      },
+    });
+    if (!task) throw new NotFoundException('Task not found');
+
+    return task;
   }
 }
