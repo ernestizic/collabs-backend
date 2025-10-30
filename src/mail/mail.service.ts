@@ -67,7 +67,7 @@ export class MailService implements OnModuleInit {
       to: email,
       subject: 'Invite to collaborate',
       text: `You have been invited to collaborate on a project`,
-      html: `<p>You have been invited to collaborate on a project. Click the link below to accept the invite. The link is valid for 10 hours </p> <a href="http://localhost:3000/project/accept-invite?code=${code}" target="_blank" rel="noopener noreferrer">Link</a>`,
+      html: `<p>You have been invited to collaborate on a project. Click the link below to accept the invite. The link is valid for 7 days </p> <a href="http://localhost:3000/accept-invite?code=${code}" target="_blank" rel="noopener noreferrer">Link</a>`,
     };
 
     try {
