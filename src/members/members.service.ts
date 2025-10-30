@@ -77,7 +77,7 @@ export class MembersService {
     };
 
     const token = await this.jwtService.signAsync(inviteData, {
-      expiresIn: '10h',
+      expiresIn: '7d',
     });
     // send mail
     this.mailService.sendInviteMail(payload.email, token).catch((err) => {
