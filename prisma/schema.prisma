@@ -73,13 +73,14 @@ model Project {
 }
 
 model Collaborator {
-  id        Int              @id @default(autoincrement())
-  role      MemberRole       @default(MEMBER)
-  userId    Int
-  projectId Int
-  user      User             @relation(fields: [userId], references: [id])
-  project   Project          @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  tasks     TaskAssignment[]
+  id           Int              @id @default(autoincrement())
+  role         MemberRole       @default(MEMBER)
+  userId       Int
+  projectId    Int
+  user         User             @relation(fields: [userId], references: [id])
+  project      Project          @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  tasks        TaskAssignment[]
+  tasksCreated Task[]
 
   @@unique([userId, projectId])
 }
@@ -114,6 +115,8 @@ model Task {
   endDate     DateTime?
   createdAt   DateTime         @default(now())
   updatedAt   DateTime         @default(now()) @updatedAt
+  createdBy   Collaborator?    @relation(fields: [creatorId], references: [id], onDelete: SetNull)
+  creatorId   Int?
 }
 
 model TaskAssignment {

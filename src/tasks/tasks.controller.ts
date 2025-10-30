@@ -7,6 +7,7 @@ import {
   Patch,
   Post,
   Query,
+  Req,
   Request,
   UseGuards,
 } from '@nestjs/common';
@@ -107,6 +108,22 @@ export class TasksController {
       status: true,
       message: 'Task updated successfully',
       data: updatedTask,
+    };
+  }
+
+  @Get(':taskId')
+  async getTaskById(
+    @Param() param: UpdateTaskParamDto,
+    @Req() req: AuthRequest,
+  ) {
+    const userId = req.user.id;
+    const { taskId, projectId } = param;
+    const task = await this.tasksService.getTaskById(taskId, userId, projectId);
+
+    return {
+      status: true,
+      message: 'Request successful',
+      data: task,
     };
   }
 }

@@ -7,10 +7,14 @@ import {
 import { PrismaService } from 'src/prisma/prisma.service';
 import { getTaskQueryType, TaskType } from './types/task-types';
 import { CreateTaskDto, UpdateTaskDto } from './dto/task-dto';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 
 @Injectable()
 export class TasksService {
-  constructor(private prismaService: PrismaService) {}
+  constructor(
+    private prismaService: PrismaService,
+    private eventEmitter: EventEmitter2,
+  ) {}
 
   async getAllProjectTasks(
     userId: number,
@@ -147,8 +151,11 @@ export class TasksService {
           })),
         },
         column: { connect: { id: columnId } },
+        createdBy: { connect: { id: member.id } },
       },
     });
+
+    this.eventEmitter.emit('task.created', { projectId, task: newTask });
 
     return newTask;
   }
@@ -227,5 +234,31 @@ export class TasksService {
     });
 
     return updatedTask;
+  }
+
+  async getTaskById(taskId: string, userId: number, projectId: number) {
+    const member = await this.prismaService.collaborator.findUnique({
+      where: {
+        userId_projectId: {
+          userId: userId,
+          projectId,
+        },
+      },
+    });
+    if (!member)
+      throw new ForbiddenException(
+        'You are not allowed to perform this action',
+      );
+
+    const task = await this.prismaService.task.findUnique({
+      where: { id: taskId },
+      include: {
+        column: { select: { name: true, identifier: true } },
+        assignees: true,
+      },
+    });
+    if (!task) throw new NotFoundException('Task not found');
+
+    return task;
   }
 }
