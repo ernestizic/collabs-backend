@@ -62,4 +62,12 @@ export class PusherService {
         this.logger.error(error);
       });
   }
+
+  async broadcastInviteAccepted(projectId: number, member: any) {
+    return this.pusher
+      .trigger(`private-project-${projectId}`, 'invite-accepted', member)
+      .catch((error) => {
+        this.logger.error(error);
+      });
+  }
 }

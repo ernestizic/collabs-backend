@@ -9,6 +9,7 @@ import { InviteMemberDto } from './dto/members-dto';
 import { JwtService } from '@nestjs/jwt';
 import { MailService } from 'src/mail/mail.service';
 import { DecodedInviteInformation } from './types/members.types';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 
 @Injectable()
 export class MembersService {
@@ -17,6 +18,7 @@ export class MembersService {
     private readonly prisma: PrismaService,
     private readonly jwtService: JwtService,
     private readonly mailService: MailService,
+    private eventEmitter: EventEmitter2,
   ) {}
 
   async getAllProjectMembers(projectId: number, page = 1) {
@@ -128,6 +130,11 @@ export class MembersService {
 
       const newMember = await this.prisma.collaborator.create({
         data: { projectId: project.id, userId: user.id },
+      });
+
+      this.eventEmitter.emit('invite.accepted', {
+        projectId: project.id,
+        member: newMember,
       });
 
       return newMember;
