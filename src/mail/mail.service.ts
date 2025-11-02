@@ -8,6 +8,7 @@ import * as nodemailer from 'nodemailer';
 
 @Injectable()
 export class MailService implements OnModuleInit {
+  clientUrl = process.env.CLIENT_BASE_URL;
   private readonly logger = new Logger(MailService.name);
   private transporter: nodemailer.Transporter;
 
@@ -67,7 +68,7 @@ export class MailService implements OnModuleInit {
       to: email,
       subject: 'Invite to collaborate',
       text: `You have been invited to collaborate on a project`,
-      html: `<p>You have been invited to collaborate on a project. Click the link below to accept the invite. The link is valid for 7 days </p> <a href="http://localhost:3000/accept-invite?code=${code}" target="_blank" rel="noopener noreferrer">Link</a>`,
+      html: `<p>You have been invited to collaborate on a project. Click the link below to accept the invite. The link is valid for 7 days </p> <a href="${this.clientUrl}/accept-invite?code=${code}" target="_blank" rel="noopener noreferrer">Link</a>`,
     };
 
     try {
