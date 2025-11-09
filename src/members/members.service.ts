@@ -3,9 +3,10 @@ import {
   ForbiddenException,
   Injectable,
   Logger,
+  NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { InviteMemberDto } from './dto/members-dto';
+import { InviteMemberDto, UpdateMemberDto } from './dto/members-dto';
 import { JwtService } from '@nestjs/jwt';
 import { MailService } from 'src/mail/mail.service';
 import { DecodedInviteInformation } from './types/members.types';
@@ -21,30 +22,95 @@ export class MembersService {
     private eventEmitter: EventEmitter2,
   ) {}
 
-  async getAllProjectMembers(projectId: number, page = 1) {
-    const limit = 20;
-    const skip = (page - 1) * limit;
+  async getAllProjectMembers(projectId: number, userId: number) {
+    const project = await this.prisma.project.findUnique({
+      where: { id: projectId },
+      include: { collaborators: true },
+    });
+    if (!project) throw new NotFoundException('Project not found');
 
-    const [members, membersCount] = await Promise.all([
-      this.prisma.collaborator.findMany({
-        where: { projectId },
-        take: limit,
-        skip,
-      }),
-      this.prisma.collaborator.count({
-        where: { projectId },
-      }),
-    ]);
+    const memberExist = project.collaborators.find(
+      (col) => col.userId === userId,
+    );
+    if (!memberExist)
+      throw new ForbiddenException('You are not allowed to view this resource');
 
-    return {
-      members,
-      pagination: {
-        total: membersCount,
-        currentPage: page,
-        itemsPerPage: limit,
-        totalPages: Math.ceil(membersCount / limit),
+    const members = await this.prisma.collaborator.findMany({
+      where: { projectId },
+      include: {
+        user: { select: { firstname: true, lastname: true, email: true } },
       },
-    };
+    });
+
+    return members;
+  }
+
+  async deleteMember(userId: number, projectId: number, memberId: number) {
+    const project = await this.prisma.project.findUnique({
+      where: { id: projectId },
+      include: { collaborators: true },
+    });
+    if (!project) throw new NotFoundException('Project not found');
+
+    // get the current operating member (user)
+    const member = project.collaborators.find((col) => col.userId === userId);
+    // Only a member and an admin should be able to remove user
+    if (!member)
+      throw new ForbiddenException('You are not allowed to perform ths action');
+    if (member.role !== 'ADMIN')
+      throw new ForbiddenException(
+        'You are not allowed to perform this action',
+      );
+
+    // Get the member which is to be deleted
+    const targetMember = project.collaborators.find(
+      (col) => col.id === memberId,
+    );
+    if (!targetMember) throw new NotFoundException('Member ID not found');
+
+    const isOwnerToBeDeleted = targetMember.userId === project.ownerId;
+    // If the current user tries to delete the project owner
+    if (isOwnerToBeDeleted)
+      throw new ForbiddenException('The project owner cannot be removed');
+
+    return this.prisma.collaborator.delete({ where: { id: memberId } });
+  }
+
+  async updateMember(
+    userId: number,
+    memberId: number,
+    payload: UpdateMemberDto,
+  ) {
+    const project = await this.prisma.project.findUnique({
+      where: { id: payload.projectId },
+      include: { collaborators: true },
+    });
+    if (!project) throw new NotFoundException('Project not found');
+
+    // check that current user is a member of project
+    const member = project.collaborators.find((col) => col.userId === userId);
+    if (!member)
+      throw new ForbiddenException('You are not allowed to perform ths action');
+
+    // Get the member which is to be updated
+    const targetMember = project.collaborators.find(
+      (col) => col.id === memberId,
+    );
+    if (!targetMember) throw new NotFoundException('Member ID not found');
+
+    const isOwnerToBeUpdated = targetMember.userId === project.ownerId;
+    // If the current user tries to delete the project owner
+    if (isOwnerToBeUpdated && payload.role)
+      throw new ForbiddenException(`Owner's role canot be updated`);
+
+    const updatedMember = this.prisma.collaborator.update({
+      where: { id: memberId },
+      data: {
+        role: payload.role,
+      },
+    });
+
+    return updatedMember;
   }
 
   async sendInviteToUser(

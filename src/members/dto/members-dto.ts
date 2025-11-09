@@ -15,3 +15,13 @@ export class InviteMemberDto {
   @IsNotEmpty()
   role: MemberRole;
 }
+
+export class UpdateMemberDto {
+  @IsNotEmpty()
+  @IsInt()
+  projectId: number;
+
+  @IsEnum(MemberRole)
+  @IsNotEmpty()
+  role: MemberRole;
+}
